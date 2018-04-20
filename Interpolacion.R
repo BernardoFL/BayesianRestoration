@@ -72,11 +72,16 @@ mcmc <- function(nsim, y_i, epsilon, sigma_sqd, c_i, init){
   k <- vector('numeric', nsim)
   k[1] <- init[['k']]
   
+  pb <- txtProgressBar(min = 0, max = nsim, style = 3)
+  
   for(i in 2:nsim){
+    if(i %% 100 == 0)
+      setTxtProgressBar(pb, i)
     v <- v_i(y[i-1], u[[i-1]], v[[i-1]], lambda[i-1], c_i)
     lambda <- full_lambda(epsilon, v[[i]])
-    u <- u_i(y[i-1], v[[i]], u[i-1]], k[i-1], c_i, indices)
+    u <- u_i(y[i-1], v[[i]], u[[i-1]], k[i-1], c_i, indices)
     k <- full_k(epsilon, u[[i]], indices)
   }
+  close(pb)
   return(list(v,lambda,u,k))
 }
