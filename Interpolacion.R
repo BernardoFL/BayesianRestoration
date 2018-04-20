@@ -6,7 +6,9 @@ v_i <- function(y_i, u_i, old_vi, lambda, c_i){
   regiterDoParallel(cl)
   v_is <- foreach(i = 1:length(v_i), .combine = 'c') %dopar% {
   prop <- rnorm(1, old_vi[i], sigma_sqd)
-  prob <- (-prop^2/(2*lambda))  - (c_i[i]*exp(u_i[i]+old_v_i[i])) + (old_vi[i]*y_i[i])
+  prob_num <- (-prop^2/(2*lambda))  - (c_i[i]*exp(u_i[i]+prop)) + (prop*y_i[i])
+  prob_denom <-  (-old_vi[i]^2/(2*lambda))  - (c_i[i]*exp(u_i[i]+old_v_i[i])) + (old_vi[i]*y_i[i])
+  prob <- exp(prob_num - prob-denom)
   prob <- min(1,prob)
   if(runif(1) < prob)
     prop
@@ -23,8 +25,12 @@ u_i <- function(y_i, v_i, old_ui, k, c_i, indices){
   regiterDoParallel(cl)
   u_is <- foreach(i = 1:length(u_i), .combine = 'c') %dopar% {
     prop <- rnorm(1, old_ui[i], sigma_sqd)
-    prob <- (-1/(2*k) * (old_ui-old_ui[indices[[i]] ])^2)  - 
+    prob_num <- (-1/(2*k) * (prop-old_ui[indices[[i]] ])^2)  - 
+      (c_i[i]*exp(v_i[i]+prop)) + (prop*y_i[i])
+    
+    prob_denom <- (-1/(2*k) * (old_ui[i]-old_ui[indices[[i]] ])^2)  - 
       (c_i[i]*exp(v_i[i]+old_u_i[i])) + (old_ui[i]*y_i[i])
+    prob <- exp(prob_num - prob_denom)
     prob <- min(1,prob)
     if(runif(1) < prob)
       prop
